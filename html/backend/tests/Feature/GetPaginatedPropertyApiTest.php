@@ -10,11 +10,18 @@ class GetPaginatedPropertyApiTest extends TestCase
 {
     use RefreshDatabase;
 
+    private const API_ENDPOINT = '/api/properties';
+
+    private function createProperty(array $overrides = [])
+    {
+        return Property::factory()->soldable()->create($overrides);
+    }
+
     public function testFetchesPropertiesSuccessfully()
     {
         Property::factory()->count(5)->soldable()->create();
 
-        $response = $this->getJson('/api/properties');
+        $response = $this->getJson(self::API_ENDPOINT);
 
         $response->assertStatus(200)
             ->assertJsonStructure([
@@ -54,119 +61,118 @@ class GetPaginatedPropertyApiTest extends TestCase
     {
         Property::factory()->soldable()->count(30)->create();
 
-        $perPage = 25;
-        $page = 2;
-
-        $response = $this->getJson("/api/properties?per_page=$perPage&page=$page");
+        $queryParams = http_build_query(['per_page' => 25, 'page' => 2]);
+        $response = $this->getJson(self::API_ENDPOINT . "?$queryParams");
 
         $response->assertStatus(200)
             ->assertJsonPath('total', 30)
-            ->assertJsonPath('current_page', $page)
-            ->assertJsonPath('per_page', $perPage)
+            ->assertJsonPath('current_page', 2)
+            ->assertJsonPath('per_page', 25)
             ->assertJsonCount(5, 'data');
     }
 
     public function testFiltersPropertiesByProvince()
     {
         $targetProvince = 'Bangkok';
-        Property::factory()->soldable()->create(['province' => $targetProvince]);
-        Property::factory()->soldable()->create(['province' => 'Nongkhai']);
+        $this->createProperty(['province' => $targetProvince]);
+        $this->createProperty(['province' => 'Nongkhai']);
 
-        $response = $this->getJson("/api/properties?province=$targetProvince");
+        $queryParams = http_build_query(['province' => $targetProvince]);
+        $response = $this->getJson(self::API_ENDPOINT . "?$queryParams");
 
         $response->assertStatus(200)
             ->assertJsonCount(1, 'data')
-            ->assertJsonStructure([
-                'data' => [
-                    '*' => ['id', 'province']
-                ]
-            ])
             ->assertJsonPath('data.0.province', $targetProvince);
     }
 
     public function testFiltersPropertiesByCountry()
     {
         $targetCountry = 'Malaysia';
-        Property::factory()->soldable()->create(['country' => $targetCountry]);
-        Property::factory()->soldable()->create(['country' => 'Thailand']);
+        $this->createProperty(['country' => $targetCountry]);
+        $this->createProperty(['country' => 'Thailand']);
 
-        $response = $this->getJson("/api/properties?country=$targetCountry");
+        $queryParams = http_build_query(['country' => $targetCountry]);
+        $response = $this->getJson(self::API_ENDPOINT . "?$queryParams");
 
         $response->assertStatus(200)
             ->assertJsonCount(1, 'data')
-            ->assertJsonStructure([
-                'data' => [
-                    '*' => ['id', 'country']
-                ]
-            ])
             ->assertJsonPath('data.0.country', $targetCountry);
-    }
-
-    public function testSortsPropertiesByPriceAscending()
-    {
-        Property::factory()->soldable()->create(['price' => '50000.00']);
-        Property::factory()->soldable()->create(['price' => '20000.00']);
-        Property::factory()->soldable()->create(['price' => '70000.00']);
-
-        $response = $this->getJson('/api/properties?sort_by=price&sort_order=asc');
-
-        $response->assertStatus(200)
-            ->assertJsonPath('data.0.price', '20000.00')
-            ->assertJsonPath('data.1.price', '50000.00')
-            ->assertJsonPath('data.2.price', '70000.00');
-    }
-
-    public function testSortsPropertiesByPriceDescending()
-    {
-        Property::factory()->soldable()->create(['price' => '50000.00']);
-        Property::factory()->soldable()->create(['price' => '20000.00']);
-        Property::factory()->soldable()->create(['price' => '70000.00']);
-
-        $response = $this->getJson('/api/properties?sort_by=price&sort_order=desc');
-
-        $response->assertStatus(200)
-            ->assertJsonPath('data.0.price', '70000.00')
-            ->assertJsonPath('data.1.price', '50000.00')
-            ->assertJsonPath('data.2.price', '20000.00');
     }
 
     public function testSearchesPropertiesByTitle()
     {
-        Property::factory()->soldable()->create(['title' => 'Beautiful House in Bangkok']);
-        Property::factory()->soldable()->create(['title' => 'Luxury Condo in Pattaya']);
-        Property::factory()->soldable()->create(['title' => 'Cozy Apartment in Chiang Mai']);
+        $this->createProperty(['title' => 'Beautiful House in Bangkok']);
+        $this->createProperty(['title' => 'Luxury Condo in Pattaya']);
+        $this->createProperty(['title' => 'Cozy Apartment in Chiang Mai']);
 
-        $response = $this->getJson("/api/properties?search=House");
+        $queryParams = http_build_query(['search' => 'House']);
+        $response = $this->getJson(self::API_ENDPOINT . "?$queryParams");
 
         $response->assertStatus(200)
             ->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.title', 'Beautiful House in Bangkok');
     }
 
+    public function testSortsPropertiesByPriceAscending()
+    {
+        $prices = [50000, 20000, 70000];
+        foreach ($prices as $price) {
+            $this->createProperty(['price' => $price]);
+        }
+
+        $queryParams = http_build_query(['sort_by' => 'price', 'sort_order' => 'asc']);
+        $response = $this->getJson(self::API_ENDPOINT . "?$queryParams");
+
+        sort($prices);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.0.price', number_format($prices[0], 2, '.', ''))
+            ->assertJsonPath('data.1.price', number_format($prices[1], 2, '.', ''))
+            ->assertJsonPath('data.2.price', number_format($prices[2], 2, '.', ''));
+    }
+
+    public function testSortsPropertiesByPriceDescending()
+    {
+        $prices = [50000, 20000, 70000];
+        foreach ($prices as $price) {
+            $this->createProperty(['price' => $price]);
+        }
+
+        $queryParams = http_build_query(['sort_by' => 'price', 'sort_order' => 'desc']);
+        $response = $this->getJson(self::API_ENDPOINT . "?$queryParams");
+
+        rsort($prices);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.0.price', number_format($prices[0], 2, '.', ''))
+            ->assertJsonPath('data.1.price', number_format($prices[1], 2, '.', ''))
+            ->assertJsonPath('data.2.price', number_format($prices[2], 2, '.', ''));
+    }
+
     public function testFiltersPropertiesWithCombinedCriteria()
     {
-        Property::factory()->soldable()->create([
+        $this->createProperty([
             'title' => 'Luxury House in Bangkok',
             'province' => 'Bangkok',
             'country' => 'Thailand',
             'price' => 50000
         ]);
 
-        Property::factory()->soldable()->create([
+        $this->createProperty([
             'title' => 'Luxury House in Chiang Mai',
             'province' => 'Chiang Mai',
             'country' => 'Thailand',
             'price' => 60000
         ]);
 
-        Property::factory()->soldable()->create([
+        $this->createProperty([
             'title' => 'Luxury Condo in Chiang Mai',
             'province' => 'Chiang Mai',
             'country' => 'Thailand',
             'price' => 70000
         ]);
 
-        Property::factory()->soldable()->create([
+        $this->createProperty([
             'title' => 'Luxury House in Kuala Lumpur',
             'province' => 'Kuala Lumpur',
             'country' => 'Malaysia',
@@ -180,15 +186,13 @@ class GetPaginatedPropertyApiTest extends TestCase
             'sort_order' => 'desc'
         ]);
 
-        $response = $this->getJson("/api/properties?$queryParams");
+        $response = $this->getJson(self::API_ENDPOINT . "?$queryParams");
 
         $response->assertStatus(200)
             ->assertJsonCount(2, 'data')
-            ->assertJsonPath('data.0.country', 'Thailand')
-            ->assertJsonPath('data.1.country', 'Thailand')
+            ->assertJsonPath('data.0.price', number_format(60000, 2, '.', ''))
+            ->assertJsonPath('data.1.price', number_format(50000, 2, '.', ''))
             ->assertJsonPath('data.0.title', 'Luxury House in Chiang Mai')
-            ->assertJsonPath('data.1.title', 'Luxury House in Bangkok')
-            ->assertJsonPath('data.0.price', '60000.00')
-            ->assertJsonPath('data.1.price', '50000.00');
+            ->assertJsonPath('data.1.title', 'Luxury House in Bangkok');
     }
 }
