@@ -41,12 +41,16 @@ class GetPaginatedPropertyApiTest extends TestCase
                         'bathrooms_count',
                         'area',
                         'area_type',
-                        'country',
-                        'province',
-                        'street',
-                        'photos_thumb',
-                        'photos_search',
-                        'photos_full',
+                        'geo' => [
+                            'country',
+                            'province',
+                            'street',
+                        ],
+                        'photos' => [
+                            'thumb',
+                            'search',
+                            'full',
+                        ],
                         'created_at',
                         'updated_at'
                     ]
@@ -82,7 +86,7 @@ class GetPaginatedPropertyApiTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.province', $targetProvince);
+            ->assertJsonPath('data.0.geo.province', $targetProvince);
     }
 
     public function testFiltersPropertiesByCountry()
@@ -96,7 +100,7 @@ class GetPaginatedPropertyApiTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.country', $targetCountry);
+            ->assertJsonPath('data.0.geo.country', $targetCountry);
     }
 
     public function testSearchesPropertiesByTitle()

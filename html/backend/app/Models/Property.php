@@ -4,32 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class Property extends Model
 {
     use HasFactory;
-
-    protected $fillable = [
-        'title',
-        'description',
-        'for_sale',
-        'for_rent',
-        'sold',
-        'price',
-        'currency',
-        'currency_symbol',
-        'property_type',
-        'bedrooms_count',
-        'bathrooms_count',
-        'area',
-        'area_type',
-        'country',
-        'province',
-        'street',
-        'photos_thumb',
-        'photos_search',
-        'photos_full',
-    ];
 
     protected $casts = [
         'for_sale' => 'boolean',
@@ -40,4 +19,41 @@ class Property extends Model
         'bathrooms_count' => 'integer',
         'area' => 'decimal:2',
     ];
+
+    protected $hidden = [
+        'photos_thumb',
+        'photos_search',
+        'photos_full',
+        'country',
+        'province',
+        'street',
+    ];
+
+
+    protected $appends = [
+        'geo',
+        'photos',
+    ];
+
+    protected function geo(): Attribute
+    {
+        return Attribute::make(
+            get: fn(mixed $value, array $attributes) => [
+                'country' => $attributes['country'],
+                'province' => $attributes['province'],
+                'street' => $attributes['street'],
+            ]
+        );
+    }
+
+    protected function photos(): Attribute
+    {
+        return Attribute::make(
+            get: fn(mixed $value, array $attributes) => [
+                'thumb' => $attributes['photos_thumb'],
+                'search' => $attributes['photos_search'],
+                'full' => $attributes['photos_full'],
+            ]
+        );
+    }
 }
