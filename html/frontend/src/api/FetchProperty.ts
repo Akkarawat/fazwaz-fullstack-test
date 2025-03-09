@@ -41,7 +41,6 @@ export const fetchProperties = async (
       currentPage: data.current_page,
       perPage: data.per_page,
     };
-    console.log(result);
     return result;
   } catch (error) {
     console.error("Error fetching properties from API:", error);

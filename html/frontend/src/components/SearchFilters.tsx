@@ -1,8 +1,9 @@
 "use client";
-import { PROVINCES } from "@/app/const/provinces";
+import { PROVINCES } from "@/const/provinces";
 import { useState } from "react";
 
 interface SearchFiltersProps {
+  initialProvince?: string;
   onSearch: (filters: {
     search: string;
     country: string;
@@ -12,10 +13,10 @@ interface SearchFiltersProps {
   }) => void;
 }
 
-const SearchFilters = ({ onSearch }: SearchFiltersProps) => {
+const SearchFilters = ({ initialProvince, onSearch }: SearchFiltersProps) => {
   const [search, setSearch] = useState("");
   const [country, setCountry] = useState("");
-  const [province, setProvince] = useState("");
+  const [province, setProvince] = useState(initialProvince || "");
   const [sortBy, setSortBy] = useState<"price" | "created_at">("created_at");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
