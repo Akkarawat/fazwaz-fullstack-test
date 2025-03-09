@@ -18,13 +18,14 @@ interface FetchPropertiesResponse {
   perPage?: number;
 }
 
-const API_BASE_URL = "http://localhost:4000/api/properties";
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
 
 export const fetchProperties = async (
   params: FetchPropertiesParams
 ): Promise<FetchPropertiesResponse> => {
   try {
-    const { data } = await axios.get<any>(API_BASE_URL, {
+    const { data } = await axios.get<any>(`${API_BASE_URL}/api/properties`, {
       params: {
         search: params.search,
         country: params.country,
