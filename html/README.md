@@ -121,4 +121,4 @@ npm run dev
 
 The application should now be up and running.
 
-![preview](https://github.com/Akkarawat/fazwaz-fullstack-test/html/frontend/public/app_preview.png)
+![preview](https://github.com/Akkarawat/fazwaz-fullstack-test/blob/feature/takehome-assignment/html/frontend/public/app_preview.png)
