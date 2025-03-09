@@ -1,4 +1,5 @@
 "use client";
+import { PROVINCES } from "@/app/const/provinces";
 import { useState } from "react";
 
 interface SearchFiltersProps {
@@ -41,16 +42,22 @@ const SearchFilters = ({ onSearch }: SearchFiltersProps) => {
           onChange={(e) => setCountry(e.target.value)}
         />
 
-        <input
-          type="text"
+        <select
           className="border p-2 rounded w-full"
-          placeholder="Filter by Province"
           value={province}
           onChange={(e) => setProvince(e.target.value)}
-        />
+        >
+          <option value="">Select a Province</option>
+          {PROVINCES.map((prov) => (
+            <option key={prov} value={prov}>
+              {prov}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div className="flex space-x-4 mt-4">
+        <p className="text-gray-600 self-center">Sort By:</p>
         <select
           className="border p-2 rounded w-full md:w-auto"
           value={sortBy}
@@ -60,6 +67,7 @@ const SearchFilters = ({ onSearch }: SearchFiltersProps) => {
           <option value="price">Price</option>
         </select>
 
+        <p className="text-gray-600 self-center">Order:</p>
         <select
           className="border p-2 rounded w-full md:w-auto"
           value={sortOrder}

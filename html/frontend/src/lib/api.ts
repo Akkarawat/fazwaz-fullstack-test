@@ -38,7 +38,7 @@ export const fetchProperties = async (
     const result: FetchPropertiesResponse = {
       data: data.data.map((property: any) => Property.deserialize(property)),
       total: data.total,
-      currentPage: data.page,
+      currentPage: data.current_page,
       perPage: data.per_page,
     };
     console.log(result);
